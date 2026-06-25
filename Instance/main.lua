@@ -1,83 +1,57 @@
--- main.lua - With Cleanup on Unload
+-- main.lua - Debug Version
 local repo = "https://raw.githubusercontent.com/Afterpartyghost/Petrichor/refs/heads/main/Instance/"
 
 local function LoadFile(path)
-    print("Loading: " .. path)
-    local content = game:HttpGet(repo .. path)
-    local fn = loadstring(content, "@" .. path)
-    if not fn then
-        error("Failed to load: " .. path)
+    print("📂 Loading: " .. path)
+    local url = repo .. path
+    print("   URL: " .. url)
+    
+    local content = game:HttpGet(url)
+    if not content or #content == 0 then
+        error("❌ File is empty: " .. path)
     end
+    print("   Size: " .. #content .. " bytes")
+    
+    local fn, err = loadstring(content, "@" .. path)
+    if not fn then
+        error("❌ Failed to compile: " .. path .. "\n" .. tostring(err))
+    end
+    
+    print("✅ Loaded: " .. path)
     return fn()
 end
 
-print("Loading Instance...")
+print("=== INSTANCE LOADER (DEBUG) ===")
 
--- Load Core
+-- Load Config first and check it
 local Config = LoadFile("core/config.lua")
+print("✅ Config loaded successfully")
+print("   Config type: " .. type(Config))
+if Config then
+    print("   Config.Menu exists: " .. tostring(Config.Menu ~= nil))
+    if Config.Menu then
+        print("   Config.Menu.Title: " .. tostring(Config.Menu.Title))
+        print("   Config.Menu.Size: " .. tostring(Config.Menu.Size))
+    end
+end
+
 local Utils = LoadFile("core/utilities.lua")
+print("✅ Utils loaded")
+
 local Library = LoadFile("core/library.lua")
+print("✅ Library loaded")
+
+-- Init Utils
+Utils:Init()
+print("✅ Utils initialized")
 
 -- Load UI
 local UI = LoadFile("ui/menu.lua")
+print("✅ UI loaded")
 
--- Initialize UI
+-- Initialize UI with debug
+print("🔄 Initializing UI...")
 UI:Init(Library, Config, Utils)
+print("✅ UI initialized")
 
--- Load Modules
-local Modules = {
-    Aimbot = LoadFile("modules/aimbot.lua"),
-    ESP = LoadFile("modules/esp.lua"),
-    Combat = LoadFile("modules/combat.lua"),
-    Visuals = LoadFile("modules/visuals.lua"),
-    Movement = LoadFile("modules/movement.lua"),
-    AntiAim = LoadFile("modules/antiaim.lua"),
-    Ragebot = LoadFile("modules/ragebot.lua"),
-    Misc = LoadFile("modules/misc.lua"),
-}
-
--- Store modules for cleanup
-local LoadedModules = {}
-
--- Initialize each module
-print("Initializing Modules...")
-for name, module in pairs(Modules) do
-    if module and module.Init then
-        local ok, err = pcall(function()
-            module:Init(UI, Config, Utils)
-            LoadedModules[name] = module
-        end)
-        if ok then
-            print("✓ " .. name .. " loaded")
-        else
-            warn("✗ " .. name .. " failed: " .. tostring(err))
-        end
-    end
-end
-
--- Cleanup function for when menu is unloaded
-local function CleanupAll()
-    print("Cleaning up modules...")
-    for name, module in pairs(LoadedModules) do
-        if module and module.Cleanup then
-            pcall(function()
-                module:Cleanup()
-                print("✓ " .. name .. " cleaned up")
-            end)
-        end
-    end
-    LoadedModules = {}
-end
-
--- Hook into library unload
-if UI and UI.Library then
-    local oldUnload = UI.Library.Unload
-    UI.Library.Unload = function(...)
-        CleanupAll()
-        if oldUnload then
-            return oldUnload(...)
-        end
-    end
-end
-
-print("✓ All modules loaded!")
+print("=== ALL LOADED ===")
