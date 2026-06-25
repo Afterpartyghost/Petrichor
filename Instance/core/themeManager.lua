@@ -1,4 +1,4 @@
--- core/themeManager.lua - Obsidian Theme Manager
+-- core/themeManager.lua - Fixed
 local ThemeManager = {}
 
 function ThemeManager:Init(library, saveManager)
@@ -9,6 +9,7 @@ function ThemeManager:Init(library, saveManager)
         error("Failed to load Obsidian ThemeManager")
     end
     
+    -- Just return the theme directly, it already has all methods
     theme:SetLibrary(library)
     theme:SetFolder("Instance")
     
