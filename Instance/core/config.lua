@@ -1,14 +1,12 @@
---[[
-    config.lua - Configuration settings
-]]
-
+-- core/config.lua
 local Config = {
     -- Menu Settings
     Menu = {
         Title = "instance",
         Center = true,
         AutoShow = true,
-        Size = Vector2.new(700, 600),
+        -- Size should be table for Obsidian
+        Size = { X = 700, Y = 600 },
     },
     
     -- Aimbot Settings
@@ -82,23 +80,13 @@ local Config = {
             Color = Color3.fromRGB(0, 200, 255),
             Size = 10,
             Gap = 5,
-        },
-        Skybox = {
-            Enabled = false,
-            Selected = "Default",
-        },
-        Atmosphere = {
-            Enabled = false,
-            Density = 0.3,
-            Color = Color3.fromRGB(175, 195, 225),
+            Dot = true,
         },
     },
     
     -- Misc
     Misc = {
-        ModDetector = {
-            Enabled = true,
-        },
+        ModDetector = { Enabled = true },
         AntiFlashbang = false,
         AntiTrip = false,
     },
