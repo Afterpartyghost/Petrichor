@@ -1,9 +1,8 @@
---[[
-    aimbot.lua - Aimbot Module
-]]
-
+-- modules/aimbot.lua - With Cleanup
 local Aimbot = {}
 local Config, Utils, UI
+local Connections = {}
+local Enabled = false
 
 function Aimbot:Init(uiModule, configModule, utilsModule)
     Config = configModule
@@ -17,21 +16,28 @@ end
 function Aimbot:SetupUI()
     local group = UI:GetCombatGroup("Aimbot")
     
-    -- Enable Toggle
     local toggle = group:AddToggle("AimbotEnabled", {
         Text = "Enable Aimbot",
         Default = Config.Aimbot.Enabled,
         Callback = function(val)
             Config.Aimbot.Enabled = val
+            Enabled = val
+            if not val then
+                self:Cleanup()
+            end
         end,
     })
     toggle:AddKeyPicker("AimbotKey", {
         Text = "Aimbot Key",
         Default = "None",
         Mode = "Toggle",
+        Callback = function(state)
+            if not state and not Config.Aimbot.Enabled then
+                self:Cleanup()
+            end
+        end,
     })
     
-    -- Smoothness
     group:AddSlider("AimbotSmoothness", {
         Text = "Smoothness",
         Default = Config.Aimbot.Smoothness,
@@ -44,7 +50,6 @@ function Aimbot:SetupUI()
         end,
     })
     
-    -- FOV
     group:AddSlider("AimbotFOV", {
         Text = "FOV Radius",
         Default = Config.Aimbot.FOV,
@@ -57,7 +62,6 @@ function Aimbot:SetupUI()
         end,
     })
     
-    -- Hit Part
     group:AddDropdown("AimbotHitPart", {
         Text = "Hit Part",
         Default = Config.Aimbot.HitPart,
@@ -69,8 +73,9 @@ function Aimbot:SetupUI()
 end
 
 function Aimbot:StartLoop()
-    Utils.RunService.Heartbeat:Connect(function()
+    self.LoopConnection = Utils.RunService.Heartbeat:Connect(function()
         if not Config.Aimbot.Enabled then return end
+        if not Enabled then return end
         
         local target = self:GetTarget()
         if target then
@@ -80,6 +85,8 @@ function Aimbot:StartLoop()
 end
 
 function Aimbot:GetTarget()
+    if not Config.Aimbot.Enabled then return nil end
+    
     local closest, closestDist = nil, Config.Aimbot.FOV
     local mousePos = Utils.UserInputService:GetMouseLocation()
     
@@ -108,6 +115,8 @@ function Aimbot:GetTarget()
 end
 
 function Aimbot:SmoothAim(target)
+    if not Config.Aimbot.Enabled then return end
+    
     local char = target.Character
     if not char then return end
     
@@ -120,6 +129,15 @@ function Aimbot:SmoothAim(target)
     local smoothness = Config.Aimbot.Smoothness / 10
     local newCF = CFrame.lookAt(cam.CFrame.Position, part.Position)
     cam.CFrame = cam.CFrame:Lerp(newCF, smoothness)
+end
+
+function Aimbot:Cleanup()
+    Enabled = false
+    if self.LoopConnection then
+        self.LoopConnection:Disconnect()
+        self.LoopConnection = nil
+    end
+    -- Reset camera if needed
 end
 
 return Aimbot
