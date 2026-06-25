@@ -1,40 +1,19 @@
--- main.lua - Debug Version
+-- main.lua - Complete Rewrite
 local repo = "https://raw.githubusercontent.com/Afterpartyghost/Petrichor/refs/heads/main/Instance/"
 
 local function LoadFile(path)
-    print("📂 Loading: " .. path)
-    local url = repo .. path
-    print("   URL: " .. url)
-    
-    local content = game:HttpGet(url)
-    if not content or #content == 0 then
-        error("❌ File is empty: " .. path)
-    end
-    print("   Size: " .. #content .. " bytes")
-    
-    local fn, err = loadstring(content, "@" .. path)
+    print("Loading: " .. path)
+    local content = game:HttpGet(repo .. path)
+    local fn = loadstring(content, "@" .. path)
     if not fn then
-        error("❌ Failed to compile: " .. path .. "\n" .. tostring(err))
+        error("Failed to load: " .. path)
     end
-    
-    print("✅ Loaded: " .. path)
     return fn()
 end
 
-print("=== INSTANCE LOADER (DEBUG) ===")
+print("=== Loading Instance ===")
 
--- Load Config first and check it
-local Config = LoadFile("core/config.lua")
-print("✅ Config loaded successfully")
-print("   Config type: " .. type(Config))
-if Config then
-    print("   Config.Menu exists: " .. tostring(Config.Menu ~= nil))
-    if Config.Menu then
-        print("   Config.Menu.Title: " .. tostring(Config.Menu.Title))
-        print("   Config.Menu.Size: " .. tostring(Config.Menu.Size))
-    end
-end
-
+-- Load Core
 local Utils = LoadFile("core/utilities.lua")
 print("✅ Utils loaded")
 
@@ -43,15 +22,35 @@ print("✅ Library loaded")
 
 -- Init Utils
 Utils:Init()
-print("✅ Utils initialized")
 
--- Load UI
+-- Load UI (no config needed anymore)
 local UI = LoadFile("ui/menu.lua")
 print("✅ UI loaded")
 
--- Initialize UI with debug
-print("🔄 Initializing UI...")
-UI:Init(Library, Config, Utils)
+-- Initialize UI without config
+UI:Init(Library, nil, Utils)
 print("✅ UI initialized")
 
-print("=== ALL LOADED ===")
+-- Load Modules
+local Modules = {
+    Aimbot = LoadFile("modules/aimbot.lua"),
+    ESP = LoadFile("modules/esp.lua"),
+    Combat = LoadFile("modules/combat.lua"),
+    Visuals = LoadFile("modules/visuals.lua"),
+    Movement = LoadFile("modules/movement.lua"),
+    AntiAim = LoadFile("modules/antiaim.lua"),
+    Ragebot = LoadFile("modules/ragebot.lua"),
+    Misc = LoadFile("modules/misc.lua"),
+}
+
+print("Initializing Modules...")
+for name, module in pairs(Modules) do
+    if module and module.Init then
+        pcall(function()
+            module:Init(UI, nil, Utils)
+            print("✅ " .. name .. " loaded")
+        end)
+    end
+end
+
+print("✅ All modules loaded!")
