@@ -1,56 +1,27 @@
--- ui/menu.lua - More Defensive
+-- ui/menu.lua - Complete Rewrite
 local UI = {
     Window = nil,
     Tabs = {},
     Library = nil,
-    Config = nil,
 }
 
 function UI:Init(libraryModule, config, utils)
-    print("🔄 UI:Init called")
-    print("   config type: " .. type(config))
-    
-    self.Config = config or {}
-    self.Utils = utils
+    print("🔄 UI:Init started")
     
     -- Initialize Obsidian library
-    print("   Loading library...")
     local lib, theme, save = libraryModule:Init()
     self.Library = lib
-    print("   Library loaded")
     
-    -- Get config values with defaults
-    local title = "instance"
-    local size = { X = 700, Y = 600 }
-    local autoShow = true
-    
-    -- SAFELY check config
-    if type(config) == "table" then
-        print("   Config is a table, checking Menu...")
-        if config.Menu then
-            print("   Config.Menu exists!")
-            title = config.Menu.Title or "instance"
-            size = config.Menu.Size or { X = 700, Y = 600 }
-            autoShow = config.Menu.AutoShow or true
-        else
-            print("   ⚠️ Config.Menu is nil, using defaults")
-        end
-    else
-        print("   ⚠️ Config is not a table! Type: " .. type(config))
-    end
-    
-    print("   Title: " .. title)
-    print("   Size: " .. size.X .. "x" .. size.Y)
-    
-    -- Create Window
+    -- Create Window with hardcoded values (ignore config for now)
     self.Window = lib:CreateWindow({
-        Title = title,
+        Title = "instance",
         Center = true,
-        AutoShow = autoShow,
-        Size = UDim2.new(0, size.X, 0, size.Y),
+        AutoShow = true,
+        Size = UDim2.new(0, 700, 0, 600),
         ShowCustomCursor = true,
     })
-    print("   Window created")
+    
+    print("✅ Window created")
     
     -- Create Tabs
     self.Tabs = {
@@ -61,30 +32,33 @@ function UI:Init(libraryModule, config, utils)
         Misc = self.Window:AddTab("misc"),
         Settings = self.Window:AddTab("settings"),
     }
-    print("   Tabs created")
+    
+    print("✅ Tabs created")
     
     -- Setup Theme Manager
-    if theme and type(theme.SetLibrary) == "function" then
-        theme:SetLibrary(lib)
-        theme:SetFolder("Instance")
-        theme:ApplyToTab(self.Tabs.Settings)
-        print("   Theme Manager setup")
+    if theme then
+        pcall(function()
+            theme:SetLibrary(lib)
+            theme:SetFolder("Instance")
+            theme:ApplyToTab(self.Tabs.Settings)
+        end)
     end
     
     -- Setup Save Manager
-    if save and type(save.SetLibrary) == "function" then
-        save:SetLibrary(lib)
-        save:SetFolder("Instance/Rivals")
-        save:IgnoreThemeSettings()
-        save:SetIgnoreIndexes({ "MenuKeybind" })
-        save:BuildConfigSection(self.Tabs.Settings)
-        print("   Save Manager setup")
+    if save then
+        pcall(function()
+            save:SetLibrary(lib)
+            save:SetFolder("Instance/Rivals")
+            save:IgnoreThemeSettings()
+            save:SetIgnoreIndexes({ "MenuKeybind" })
+            save:BuildConfigSection(self.Tabs.Settings)
+        end)
     end
     
     -- Setup menu keybind
     self:SetupMenuKeybind()
     
-    print("✓ UI Initialized Successfully")
+    print("✅ UI Initialized Successfully")
 end
 
 function UI:SetupMenuKeybind()
@@ -102,50 +76,80 @@ function UI:SetupMenuKeybind()
         end
     end)
     
-    if self.Library and self.Library.Options then
-        self.Library.ToggleKeybind = self.Library.Options.MenuKeybind
+    if self.Library then
+        self.Library.ToggleKeybind = self.Library.Options and self.Library.Options.MenuKeybind
     end
 end
 
 -- Getter functions for tabs
 function UI:GetCombatGroup(name)
-    return self.Tabs and self.Tabs.Combat and self.Tabs.Combat:AddLeftGroupbox(name)
+    if self.Tabs and self.Tabs.Combat then
+        return self.Tabs.Combat:AddLeftGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetCombatRightGroup(name)
-    return self.Tabs and self.Tabs.Combat and self.Tabs.Combat:AddRightGroupbox(name)
+    if self.Tabs and self.Tabs.Combat then
+        return self.Tabs.Combat:AddRightGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetVisualsGroup(name)
-    return self.Tabs and self.Tabs.Visuals and self.Tabs.Visuals:AddLeftGroupbox(name)
+    if self.Tabs and self.Tabs.Visuals then
+        return self.Tabs.Visuals:AddLeftGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetVisualsRightGroup(name)
-    return self.Tabs and self.Tabs.Visuals and self.Tabs.Visuals:AddRightGroupbox(name)
+    if self.Tabs and self.Tabs.Visuals then
+        return self.Tabs.Visuals:AddRightGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetCharacterGroup(name)
-    return self.Tabs and self.Tabs.Character and self.Tabs.Character:AddLeftGroupbox(name)
+    if self.Tabs and self.Tabs.Character then
+        return self.Tabs.Character:AddLeftGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetCharacterRightGroup(name)
-    return self.Tabs and self.Tabs.Character and self.Tabs.Character:AddRightGroupbox(name)
+    if self.Tabs and self.Tabs.Character then
+        return self.Tabs.Character:AddRightGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetWorldGroup(name)
-    return self.Tabs and self.Tabs.World and self.Tabs.World:AddLeftGroupbox(name)
+    if self.Tabs and self.Tabs.World then
+        return self.Tabs.World:AddLeftGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetWorldRightGroup(name)
-    return self.Tabs and self.Tabs.World and self.Tabs.World:AddRightGroupbox(name)
+    if self.Tabs and self.Tabs.World then
+        return self.Tabs.World:AddRightGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetMiscGroup(name)
-    return self.Tabs and self.Tabs.Misc and self.Tabs.Misc:AddLeftGroupbox(name)
+    if self.Tabs and self.Tabs.Misc then
+        return self.Tabs.Misc:AddLeftGroupbox(name)
+    end
+    return nil
 end
 
 function UI:GetMiscRightGroup(name)
-    return self.Tabs and self.Tabs.Misc and self.Tabs.Misc:AddRightGroupbox(name)
+    if self.Tabs and self.Tabs.Misc then
+        return self.Tabs.Misc:AddRightGroupbox(name)
+    end
+    return nil
 end
 
 return UI
