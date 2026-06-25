@@ -1,7 +1,4 @@
---[[
-    menu.lua - Creates the UI
-]]
-
+-- ui/menu.lua - Obsidian UI
 local UI = {
     Window = nil,
     Tabs = {},
@@ -9,18 +6,19 @@ local UI = {
     Config = nil,
 }
 
-function UI:Init(library, themeManager, saveManager, config)
-    self.Library = library
+function UI:Init(libraryModule, themeManagerModule, saveManagerModule, config)
     self.Config = config
     
-    local lib, theme, save = library:Init()
+    -- Initialize Obsidian library
+    local lib, theme, save = libraryModule:Init()
+    self.Library = lib
     
-    -- Create Window
+    -- Create Window with Obsidian syntax
     self.Window = lib:CreateWindow({
-        Title = config.Menu.Title,
-        Center = config.Menu.Center,
-        AutoShow = config.Menu.AutoShow,
-        Size = config.Menu.Size,
+        Title = config.Menu.Title or "instance",
+        Center = config.Menu.Center or true,
+        AutoShow = config.Menu.AutoShow or true,
+        Size = config.Menu.Size or Vector2.new(700, 600),
         ShowCustomCursor = true,
     })
     
@@ -34,17 +32,18 @@ function UI:Init(library, themeManager, saveManager, config)
         Settings = self.Window:AddTab("settings"),
     }
     
-    -- Setup Theme & Save
-    local themeMgr = themeManager:Init(lib, save)
-    local saveMgr = saveManager:Init(lib, themeMgr)
+    -- Setup Theme Manager
+    local themeMgr = theme:Init(lib, save)
+    local saveMgr = save:Init(lib, themeMgr)
     
+    -- Apply to settings tab
     themeMgr:ApplyToTab(self.Tabs.Settings)
     saveMgr:BuildConfigSection(self.Tabs.Settings)
     
-    -- Add Menu Keybind
+    -- Setup menu keybind
     self:SetupMenuKeybind()
     
-    print("✓ UI Initialized")
+    print("✓ UI Initialized with Obsidian")
 end
 
 function UI:SetupMenuKeybind()
@@ -63,6 +62,7 @@ function UI:SetupMenuKeybind()
     self.Library.ToggleKeybind = self.Library.Options.MenuKeybind
 end
 
+-- Getter functions for tabs
 function UI:GetCombatGroup(name)
     return self.Tabs.Combat:AddLeftGroupbox(name)
 end
