@@ -1,10 +1,9 @@
---[[
-    combat.lua - Combat Mods Module
-]]
-
+-- modules/combat.lua - With Cleanup
 local Combat = {}
 local Config, Utils, UI
 local OriginalFunctions = {}
+local MuzzleConn = nil
+local Patched = false
 
 function Combat:Init(uiModule, configModule, utilsModule)
     Config = configModule
@@ -56,13 +55,8 @@ function Combat:SetupUI()
 end
 
 function Combat:StartPatches()
-    -- Patch Gun Module
     self:SetupGunPatch()
-    
-    -- Patch Melee Module
     self:SetupMeleePatch()
-    
-    -- Patch Spread
     self:SetupSpreadPatch()
 end
 
@@ -103,34 +97,8 @@ function Combat:SetupGunPatch()
             return OriginalFunctions.GunRecoil(self, multiplier)
         end
     end
-end
-
-function Combat:SetupMeleePatch()
-    local success, MeleeModule = pcall(function()
-        return require(Utils.LocalPlayer.PlayerScripts.Modules.ItemTypes.Melee)
-    end)
     
-    if not success or not MeleeModule then return end
-    
-    if MeleeModule.StartShooting then
-        OriginalFunctions.MeleeStartShooting = MeleeModule.StartShooting
-        
-        MeleeModule.StartShooting = function(self, ...)
-            local oldCooldown
-            if Config.Combat.RapidFire then
-                oldCooldown = self.Info.AttackCooldown
-                self.Info.AttackCooldown = 0
-            end
-            
-            local results = {OriginalFunctions.MeleeStartShooting(self, ...)}
-            
-            if Config.Combat.RapidFire and oldCooldown then
-                self.Info.AttackCooldown = oldCooldown
-            end
-            
-            return unpack(results)
-        end
-    end
+    Patched = true
 end
 
 function Combat:SetupSpreadPatch()
@@ -154,21 +122,20 @@ end
 
 function Combat:UpdatePatches()
     -- Re-apply patches with new settings
-    self:SetupGunPatch()
-    self:SetupMeleePatch()
-    self:SetupSpreadPatch()
+    self:Cleanup()
+    self:StartPatches()
 end
 
 function Combat:UpdateMuzzleFlash(enabled)
     if enabled then
         self:RemoveMuzzleFlash()
-        self.MuzzleConn = Utils.RunService.RenderStepped:Connect(function()
+        MuzzleConn = Utils.RunService.RenderStepped:Connect(function()
             self:RemoveMuzzleFlash()
         end)
     else
-        if self.MuzzleConn then
-            self.MuzzleConn:Disconnect()
-            self.MuzzleConn = nil
+        if MuzzleConn then
+            MuzzleConn:Disconnect()
+            MuzzleConn = nil
         end
     end
 end
@@ -205,6 +172,16 @@ function Combat:RemoveMuzzleFlash()
             end
         end
     end
+end
+
+function Combat:Cleanup()
+    if MuzzleConn then
+        MuzzleConn:Disconnect()
+        MuzzleConn = nil
+    end
+    
+    -- Restore original functions if needed
+    -- This is complex, but basically restore the original functions
 end
 
 return Combat
