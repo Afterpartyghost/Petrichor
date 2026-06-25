@@ -1,4 +1,4 @@
--- ui/menu.lua - Fixed for Obsidian
+-- ui/menu.lua - Fixed
 local UI = {
     Window = nil,
     Tabs = {},
@@ -13,13 +13,15 @@ function UI:Init(libraryModule, themeManagerModule, saveManagerModule, config)
     local lib, theme, save = libraryModule:Init()
     self.Library = lib
     
-    -- Create Window with CORRECT Obsidian syntax
+    -- Get size from config
+    local size = config.Menu.Size or { X = 700, Y = 600 }
+    
+    -- Create Window
     self.Window = lib:CreateWindow({
         Title = config.Menu.Title or "instance",
         Center = true,
         AutoShow = true,
-        -- Size MUST be UDim2, not Vector2
-        Size = UDim2.new(0, 700, 0, 600),
+        Size = UDim2.new(0, size.X, 0, size.Y),
         ShowCustomCursor = true,
     })
     
@@ -33,12 +35,18 @@ function UI:Init(libraryModule, themeManagerModule, saveManagerModule, config)
         Settings = self.Window:AddTab("settings"),
     }
     
-    -- Setup Theme Manager
-    local themeMgr = theme:Init(lib, save)
-    local saveMgr = save:Init(lib, themeMgr)
-    
-    -- Apply to settings tab
+    -- Setup Theme Manager - FIXED: Just use the theme directly
+    local themeMgr = theme
+    themeMgr:SetLibrary(lib)
+    themeMgr:SetFolder("Instance")
     themeMgr:ApplyToTab(self.Tabs.Settings)
+    
+    -- Setup Save Manager - FIXED: Just use the save directly
+    local saveMgr = save
+    saveMgr:SetLibrary(lib)
+    saveMgr:SetFolder("Instance/Rivals")
+    saveMgr:IgnoreThemeSettings()
+    saveMgr:SetIgnoreIndexes({ "MenuKeybind" })
     saveMgr:BuildConfigSection(self.Tabs.Settings)
     
     -- Setup menu keybind
