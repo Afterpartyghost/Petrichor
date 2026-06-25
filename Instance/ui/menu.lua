@@ -1,4 +1,4 @@
--- ui/menu.lua - Obsidian UI
+-- ui/menu.lua - Fixed for Obsidian
 local UI = {
     Window = nil,
     Tabs = {},
@@ -13,12 +13,13 @@ function UI:Init(libraryModule, themeManagerModule, saveManagerModule, config)
     local lib, theme, save = libraryModule:Init()
     self.Library = lib
     
-    -- Create Window with Obsidian syntax
+    -- Create Window with CORRECT Obsidian syntax
     self.Window = lib:CreateWindow({
         Title = config.Menu.Title or "instance",
-        Center = config.Menu.Center or true,
-        AutoShow = config.Menu.AutoShow or true,
-        Size = config.Menu.Size or Vector2.new(700, 600),
+        Center = true,
+        AutoShow = true,
+        -- Size MUST be UDim2, not Vector2
+        Size = UDim2.new(0, 700, 0, 600),
         ShowCustomCursor = true,
     })
     
