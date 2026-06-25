@@ -1,44 +1,44 @@
---[[
-    Instance.lua - Main Entry Point (Local Version)
-]]
+-- main.lua
+local repo = "https://raw.githubusercontent.com/Afterpartyghost/Petrichor/refs/heads/main/Instance/"
 
 local function LoadFile(path)
-    if not isfile(path) then
-        error("File not found: " .. path)
-    end
-    local content = readfile(path)
-    local fn, err = loadstring(content, "@" .. path)
+    print("Loading: " .. path)
+    local content = game:HttpGet(repo .. path)
+    local fn = loadstring(content, "@" .. path)
     if not fn then
-        error("Failed to load " .. path .. ": " .. err)
+        error("Failed to load: " .. path)
     end
     return fn()
 end
 
-print("Loading Instance...")
+print("Loading Instance from GitHub...")
 
 -- Load Core
-local Config = LoadFile("instance/core/config.lua")
-local Utils = LoadFile("instance/core/utilities.lua")
-local Library = LoadFile("instance/core/library.lua")
-local ThemeManager = LoadFile("instance/core/themeManager.lua")
-local SaveManager = LoadFile("instance/core/saveManager.lua")
+local Config = LoadFile("core/config.lua")
+local Utils = LoadFile("core/utilities.lua")
+local Library = LoadFile("core/library.lua")
+local ThemeManager = LoadFile("core/themeManager.lua")
+local SaveManager = LoadFile("core/saveManager.lua")
+
+-- Init Utils
+Utils:Init()
 
 -- Load UI
-local UI = LoadFile("instance/ui/menu.lua")
+local UI = LoadFile("ui/menu.lua")
 
 -- Initialize UI
 UI:Init(Library, ThemeManager, SaveManager, Config)
 
 -- Load Modules
 local Modules = {
-    Aimbot = LoadFile("instance/modules/aimbot.lua"),
-    ESP = LoadFile("instance/modules/esp.lua"),
-    Combat = LoadFile("instance/modules/combat.lua"),
-    Visuals = LoadFile("instance/modules/visuals.lua"),
-    Movement = LoadFile("instance/modules/movement.lua"),
-    AntiAim = LoadFile("instance/modules/antiaim.lua"),
-    Ragebot = LoadFile("instance/modules/ragebot.lua"),
-    Misc = LoadFile("instance/modules/misc.lua"),
+    Aimbot = LoadFile("modules/aimbot.lua"),
+    ESP = LoadFile("modules/esp.lua"),
+    Combat = LoadFile("modules/combat.lua"),
+    Visuals = LoadFile("modules/visuals.lua"),
+    Movement = LoadFile("modules/movement.lua"),
+    AntiAim = LoadFile("modules/antiaim.lua"),
+    Ragebot = LoadFile("modules/ragebot.lua"),
+    Misc = LoadFile("modules/misc.lua"),
 }
 
 -- Initialize each module
@@ -52,4 +52,4 @@ for name, module in pairs(Modules) do
     end
 end
 
-print("All modules loaded successfully!")
+print("✓ All modules loaded successfully!")
