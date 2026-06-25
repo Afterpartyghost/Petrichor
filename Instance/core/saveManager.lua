@@ -1,4 +1,4 @@
--- core/saveManager.lua - Obsidian Save Manager
+-- core/saveManager.lua - Fixed
 local SaveManager = {}
 
 function SaveManager:Init(library, themeManager)
@@ -9,6 +9,7 @@ function SaveManager:Init(library, themeManager)
         error("Failed to load Obsidian SaveManager")
     end
     
+    -- Just return the save directly
     save:SetLibrary(library)
     save:SetFolder("Instance/Rivals")
     save:IgnoreThemeSettings()
