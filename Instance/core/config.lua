@@ -1,15 +1,12 @@
 -- core/config.lua
 local Config = {
-    -- Menu Settings
     Menu = {
         Title = "instance",
         Center = true,
         AutoShow = true,
-        -- Size should be table for Obsidian
         Size = { X = 700, Y = 600 },
     },
     
-    -- Aimbot Settings
     Aimbot = {
         Enabled = false,
         Smoothness = 2,
@@ -20,7 +17,6 @@ local Config = {
         HitChance = 100,
     },
     
-    -- ESP Settings
     ESP = {
         Enabled = false,
         Box = false,
@@ -38,7 +34,6 @@ local Config = {
         ChamsTransparency = 0.3,
     },
     
-    -- Combat Mods
     Combat = {
         NoSpread = false,
         NoRecoil = false,
@@ -46,7 +41,6 @@ local Config = {
         NoMuzzleFlash = false,
     },
     
-    -- Movement
     Movement = {
         Walkspeed = false,
         WalkspeedValue = 32,
@@ -54,7 +48,6 @@ local Config = {
         FlySpeed = 50,
     },
     
-    -- Anti-Aim
     AntiAim = {
         Enabled = false,
         Yaw = "none",
@@ -66,7 +59,6 @@ local Config = {
         Underground = false,
     },
     
-    -- Visuals
     Visuals = {
         FOV = {
             Enabled = false,
@@ -84,14 +76,12 @@ local Config = {
         },
     },
     
-    -- Misc
     Misc = {
         ModDetector = { Enabled = true },
         AntiFlashbang = false,
         AntiTrip = false,
     },
     
-    -- Ragebot
     Ragebot = {
         Enabled = false,
         AutoTarget = false,
@@ -102,5 +92,9 @@ local Config = {
         VoidSpam = false,
     },
 }
+
+-- Add a print to confirm it loaded
+print("✅ Config file loaded successfully!")
+print("   Menu title: " .. (Config.Menu.Title or "NOT SET"))
 
 return Config
