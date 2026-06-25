@@ -1,4 +1,4 @@
--- ui/menu.lua - Fixed
+-- ui/menu.lua - More Defensive
 local UI = {
     Window = nil,
     Tabs = {},
@@ -6,24 +6,51 @@ local UI = {
     Config = nil,
 }
 
-function UI:Init(libraryModule, themeManagerModule, saveManagerModule, config)
-    self.Config = config
+function UI:Init(libraryModule, config, utils)
+    print("🔄 UI:Init called")
+    print("   config type: " .. type(config))
+    
+    self.Config = config or {}
+    self.Utils = utils
     
     -- Initialize Obsidian library
+    print("   Loading library...")
     local lib, theme, save = libraryModule:Init()
     self.Library = lib
+    print("   Library loaded")
     
-    -- Get size from config
-    local size = config.Menu.Size or { X = 700, Y = 600 }
+    -- Get config values with defaults
+    local title = "instance"
+    local size = { X = 700, Y = 600 }
+    local autoShow = true
+    
+    -- SAFELY check config
+    if type(config) == "table" then
+        print("   Config is a table, checking Menu...")
+        if config.Menu then
+            print("   Config.Menu exists!")
+            title = config.Menu.Title or "instance"
+            size = config.Menu.Size or { X = 700, Y = 600 }
+            autoShow = config.Menu.AutoShow or true
+        else
+            print("   ⚠️ Config.Menu is nil, using defaults")
+        end
+    else
+        print("   ⚠️ Config is not a table! Type: " .. type(config))
+    end
+    
+    print("   Title: " .. title)
+    print("   Size: " .. size.X .. "x" .. size.Y)
     
     -- Create Window
     self.Window = lib:CreateWindow({
-        Title = config.Menu.Title or "instance",
+        Title = title,
         Center = true,
-        AutoShow = true,
+        AutoShow = autoShow,
         Size = UDim2.new(0, size.X, 0, size.Y),
         ShowCustomCursor = true,
     })
+    print("   Window created")
     
     -- Create Tabs
     self.Tabs = {
@@ -34,25 +61,30 @@ function UI:Init(libraryModule, themeManagerModule, saveManagerModule, config)
         Misc = self.Window:AddTab("misc"),
         Settings = self.Window:AddTab("settings"),
     }
+    print("   Tabs created")
     
-    -- Setup Theme Manager - FIXED: Just use the theme directly
-    local themeMgr = theme
-    themeMgr:SetLibrary(lib)
-    themeMgr:SetFolder("Instance")
-    themeMgr:ApplyToTab(self.Tabs.Settings)
+    -- Setup Theme Manager
+    if theme and type(theme.SetLibrary) == "function" then
+        theme:SetLibrary(lib)
+        theme:SetFolder("Instance")
+        theme:ApplyToTab(self.Tabs.Settings)
+        print("   Theme Manager setup")
+    end
     
-    -- Setup Save Manager - FIXED: Just use the save directly
-    local saveMgr = save
-    saveMgr:SetLibrary(lib)
-    saveMgr:SetFolder("Instance/Rivals")
-    saveMgr:IgnoreThemeSettings()
-    saveMgr:SetIgnoreIndexes({ "MenuKeybind" })
-    saveMgr:BuildConfigSection(self.Tabs.Settings)
+    -- Setup Save Manager
+    if save and type(save.SetLibrary) == "function" then
+        save:SetLibrary(lib)
+        save:SetFolder("Instance/Rivals")
+        save:IgnoreThemeSettings()
+        save:SetIgnoreIndexes({ "MenuKeybind" })
+        save:BuildConfigSection(self.Tabs.Settings)
+        print("   Save Manager setup")
+    end
     
     -- Setup menu keybind
     self:SetupMenuKeybind()
     
-    print("✓ UI Initialized with Obsidian")
+    print("✓ UI Initialized Successfully")
 end
 
 function UI:SetupMenuKeybind()
@@ -65,51 +97,55 @@ function UI:SetupMenuKeybind()
     })
     
     menuGroup:AddButton("Unload", function()
-        self.Library:Unload()
+        if self.Library then
+            self.Library:Unload()
+        end
     end)
     
-    self.Library.ToggleKeybind = self.Library.Options.MenuKeybind
+    if self.Library and self.Library.Options then
+        self.Library.ToggleKeybind = self.Library.Options.MenuKeybind
+    end
 end
 
 -- Getter functions for tabs
 function UI:GetCombatGroup(name)
-    return self.Tabs.Combat:AddLeftGroupbox(name)
+    return self.Tabs and self.Tabs.Combat and self.Tabs.Combat:AddLeftGroupbox(name)
 end
 
 function UI:GetCombatRightGroup(name)
-    return self.Tabs.Combat:AddRightGroupbox(name)
+    return self.Tabs and self.Tabs.Combat and self.Tabs.Combat:AddRightGroupbox(name)
 end
 
 function UI:GetVisualsGroup(name)
-    return self.Tabs.Visuals:AddLeftGroupbox(name)
+    return self.Tabs and self.Tabs.Visuals and self.Tabs.Visuals:AddLeftGroupbox(name)
 end
 
 function UI:GetVisualsRightGroup(name)
-    return self.Tabs.Visuals:AddRightGroupbox(name)
+    return self.Tabs and self.Tabs.Visuals and self.Tabs.Visuals:AddRightGroupbox(name)
 end
 
 function UI:GetCharacterGroup(name)
-    return self.Tabs.Character:AddLeftGroupbox(name)
+    return self.Tabs and self.Tabs.Character and self.Tabs.Character:AddLeftGroupbox(name)
 end
 
 function UI:GetCharacterRightGroup(name)
-    return self.Tabs.Character:AddRightGroupbox(name)
+    return self.Tabs and self.Tabs.Character and self.Tabs.Character:AddRightGroupbox(name)
 end
 
 function UI:GetWorldGroup(name)
-    return self.Tabs.World:AddLeftGroupbox(name)
+    return self.Tabs and self.Tabs.World and self.Tabs.World:AddLeftGroupbox(name)
 end
 
 function UI:GetWorldRightGroup(name)
-    return self.Tabs.World:AddRightGroupbox(name)
+    return self.Tabs and self.Tabs.World and self.Tabs.World:AddRightGroupbox(name)
 end
 
 function UI:GetMiscGroup(name)
-    return self.Tabs.Misc:AddLeftGroupbox(name)
+    return self.Tabs and self.Tabs.Misc and self.Tabs.Misc:AddLeftGroupbox(name)
 end
 
 function UI:GetMiscRightGroup(name)
-    return self.Tabs.Misc:AddRightGroupbox(name)
+    return self.Tabs and self.Tabs.Misc and self.Tabs.Misc:AddRightGroupbox(name)
 end
 
 return UI
