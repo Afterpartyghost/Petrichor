@@ -1,17 +1,24 @@
--- main.lua
+-- main.lua - Obsidian Version
 local repo = "https://raw.githubusercontent.com/Afterpartyghost/Petrichor/refs/heads/main/Instance/"
 
 local function LoadFile(path)
+    local url = repo .. path
     print("Loading: " .. path)
-    local content = game:HttpGet(repo .. path)
-    local fn = loadstring(content, "@" .. path)
-    if not fn then
-        error("Failed to load: " .. path)
+    
+    local content = game:HttpGet(url)
+    if not content or #content == 0 then
+        error("File is empty: " .. path)
     end
+    
+    local fn, err = loadstring(content, "@" .. path)
+    if not fn then
+        error("Failed to compile: " .. path .. "\n" .. err)
+    end
+    
     return fn()
 end
 
-print("Loading Instance from GitHub...")
+print("Loading Instance (Obsidian)...")
 
 -- Load Core
 local Config = LoadFile("core/config.lua")
@@ -41,15 +48,19 @@ local Modules = {
     Misc = LoadFile("modules/misc.lua"),
 }
 
--- Initialize each module
+-- Initialize modules
 print("Initializing Modules...")
 for name, module in pairs(Modules) do
     if module and module.Init then
-        pcall(function()
+        local ok, err = pcall(function()
             module:Init(UI, Config, Utils)
-            print("✓ " .. name .. " loaded")
         end)
+        if ok then
+            print("✓ " .. name .. " loaded")
+        else
+            warn("✗ " .. name .. " failed: " .. tostring(err))
+        end
     end
 end
 
-print("✓ All modules loaded successfully!")
+print("✓ All modules loaded!")
