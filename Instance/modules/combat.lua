@@ -1,14 +1,19 @@
--- modules/combat.lua - With Cleanup
+-- modules/combat.lua - Works without config
 local Combat = {}
-local Config, Utils, UI
-local OriginalFunctions = {}
+local Utils, UI
 local MuzzleConn = nil
-local Patched = false
+
+-- Default settings
+local Settings = {
+    NoSpread = false,
+    NoRecoil = false,
+    RapidFire = false,
+    NoMuzzleFlash = false,
+}
 
 function Combat:Init(uiModule, configModule, utilsModule)
-    Config = configModule
-    Utils = utilsModule
     UI = uiModule
+    Utils = utilsModule
     
     self:SetupUI()
     self:StartPatches()
@@ -16,39 +21,40 @@ end
 
 function Combat:SetupUI()
     local group = UI:GetCombatRightGroup("Combat Mods")
+    if not group then return end
     
     group:AddToggle("NoSpread", {
         Text = "No Spread",
-        Default = Config.Combat.NoSpread,
+        Default = false,
         Callback = function(val)
-            Config.Combat.NoSpread = val
+            Settings.NoSpread = val
             self:UpdatePatches()
         end,
     })
     
     group:AddToggle("NoRecoil", {
         Text = "No Recoil",
-        Default = Config.Combat.NoRecoil,
+        Default = false,
         Callback = function(val)
-            Config.Combat.NoRecoil = val
+            Settings.NoRecoil = val
             self:UpdatePatches()
         end,
     })
     
     group:AddToggle("RapidFire", {
         Text = "Rapid Fire",
-        Default = Config.Combat.RapidFire,
+        Default = false,
         Callback = function(val)
-            Config.Combat.RapidFire = val
+            Settings.RapidFire = val
             self:UpdatePatches()
         end,
     })
     
     group:AddToggle("NoMuzzleFlash", {
         Text = "No Muzzle Flash",
-        Default = Config.Combat.NoMuzzleFlash,
+        Default = false,
         Callback = function(val)
-            Config.Combat.NoMuzzleFlash = val
+            Settings.NoMuzzleFlash = val
             self:UpdateMuzzleFlash(val)
         end,
     })
@@ -56,7 +62,6 @@ end
 
 function Combat:StartPatches()
     self:SetupGunPatch()
-    self:SetupMeleePatch()
     self:SetupSpreadPatch()
 end
 
@@ -68,18 +73,17 @@ function Combat:SetupGunPatch()
     if not success or not GunModule then return end
     
     if GunModule.StartShooting then
-        OriginalFunctions.GunStartShooting = GunModule.StartShooting
-        
+        local oldStart = GunModule.StartShooting
         GunModule.StartShooting = function(self, ...)
             local oldCooldown
-            if Config.Combat.RapidFire then
+            if Settings.RapidFire then
                 oldCooldown = self.Info.ShootCooldown
                 self.Info.ShootCooldown = 0
             end
             
-            local results = {OriginalFunctions.GunStartShooting(self, ...)}
+            local results = {oldStart(self, ...)}
             
-            if Config.Combat.RapidFire and oldCooldown then
+            if Settings.RapidFire and oldCooldown then
                 self.Info.ShootCooldown = oldCooldown
             end
             
@@ -88,17 +92,14 @@ function Combat:SetupGunPatch()
     end
     
     if GunModule._Recoil then
-        OriginalFunctions.GunRecoil = GunModule._Recoil
-        
+        local oldRecoil = GunModule._Recoil
         GunModule._Recoil = function(self, multiplier)
-            if Config.Combat.NoRecoil then
+            if Settings.NoRecoil then
                 return
             end
-            return OriginalFunctions.GunRecoil(self, multiplier)
+            return oldRecoil(self, multiplier)
         end
     end
-    
-    Patched = true
 end
 
 function Combat:SetupSpreadPatch()
@@ -109,20 +110,17 @@ function Combat:SetupSpreadPatch()
     if not success or not GameplayUtility then return end
     
     if GameplayUtility.GetSpread then
-        OriginalFunctions.GetSpread = GameplayUtility.GetSpread
-        
+        local oldSpread = GameplayUtility.GetSpread
         GameplayUtility.GetSpread = function(...)
-            if Config.Combat.NoSpread then
+            if Settings.NoSpread then
                 return CFrame.new()
             end
-            return OriginalFunctions.GetSpread(...)
+            return oldSpread(...)
         end
     end
 end
 
 function Combat:UpdatePatches()
-    -- Re-apply patches with new settings
-    self:Cleanup()
     self:StartPatches()
 end
 
@@ -179,9 +177,6 @@ function Combat:Cleanup()
         MuzzleConn:Disconnect()
         MuzzleConn = nil
     end
-    
-    -- Restore original functions if needed
-    -- This is complex, but basically restore the original functions
 end
 
 return Combat
