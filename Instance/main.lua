@@ -1,4 +1,4 @@
--- main.lua - Complete Rewrite
+-- main.lua - Simplified
 local repo = "https://raw.githubusercontent.com/Afterpartyghost/Petrichor/refs/heads/main/Instance/"
 
 local function LoadFile(path)
@@ -15,21 +15,13 @@ print("=== Loading Instance ===")
 
 -- Load Core
 local Utils = LoadFile("core/utilities.lua")
-print("✅ Utils loaded")
-
 local Library = LoadFile("core/library.lua")
-print("✅ Library loaded")
 
--- Init Utils
 Utils:Init()
 
--- Load UI (no config needed anymore)
+-- Load UI
 local UI = LoadFile("ui/menu.lua")
-print("✅ UI loaded")
-
--- Initialize UI without config
 UI:Init(Library, nil, Utils)
-print("✅ UI initialized")
 
 -- Load Modules
 local Modules = {
@@ -43,7 +35,6 @@ local Modules = {
     Misc = LoadFile("modules/misc.lua"),
 }
 
-print("Initializing Modules...")
 for name, module in pairs(Modules) do
     if module and module.Init then
         pcall(function()
