@@ -1,14 +1,27 @@
--- modules/esp.lua - With Cleanup
+-- modules/esp.lua - Works without config
 local ESP = {}
-local Config, Utils, UI
+local Utils, UI
 local Objects = {}
 local Enabled = false
 local LoopConnection = nil
 
+-- Default settings
+local Settings = {
+    Enabled = false,
+    Box = false,
+    BoxColor = Color3.fromRGB(0, 200, 255),
+    HealthBar = false,
+    Name = false,
+    NameColor = Color3.fromRGB(255, 255, 255),
+    Distance = false,
+    Chams = false,
+    ChamsColor = Color3.fromRGB(0, 200, 255),
+    ChamsTransparency = 0.3,
+}
+
 function ESP:Init(uiModule, configModule, utilsModule)
-    Config = configModule
-    Utils = utilsModule
     UI = uiModule
+    Utils = utilsModule
     
     self:SetupUI()
     self:StartLoop()
@@ -17,12 +30,13 @@ end
 
 function ESP:SetupUI()
     local group = UI:GetVisualsGroup("ESP")
+    if not group then return end
     
     local toggle = group:AddToggle("ESPEnabled", {
         Text = "Enable ESP",
-        Default = Config.ESP.Enabled,
+        Default = false,
         Callback = function(val)
-            Config.ESP.Enabled = val
+            Settings.Enabled = val
             Enabled = val
             if not val then
                 self:Cleanup()
@@ -32,70 +46,70 @@ function ESP:SetupUI()
     
     group:AddToggle("BoxESP", {
         Text = "Box ESP",
-        Default = Config.ESP.Box,
+        Default = false,
         Callback = function(val)
-            Config.ESP.Box = val
+            Settings.Box = val
         end,
     }):AddColorPicker("BoxColor", {
-        Default = Config.ESP.BoxColor,
+        Default = Settings.BoxColor,
         Title = "Box Color",
         Callback = function(val)
-            Config.ESP.BoxColor = val
+            Settings.BoxColor = val
         end,
     })
     
     group:AddToggle("HealthBar", {
         Text = "Health Bar",
-        Default = Config.ESP.HealthBar,
+        Default = false,
         Callback = function(val)
-            Config.ESP.HealthBar = val
+            Settings.HealthBar = val
         end,
     })
     
     group:AddToggle("NameESP", {
         Text = "Name ESP",
-        Default = Config.ESP.Name,
+        Default = false,
         Callback = function(val)
-            Config.ESP.Name = val
+            Settings.Name = val
         end,
     }):AddColorPicker("NameColor", {
-        Default = Config.ESP.NameColor,
+        Default = Settings.NameColor,
         Title = "Name Color",
         Callback = function(val)
-            Config.ESP.NameColor = val
+            Settings.NameColor = val
         end,
     })
     
     group:AddToggle("Chams", {
         Text = "Chams",
-        Default = Config.ESP.Chams,
+        Default = false,
         Callback = function(val)
-            Config.ESP.Chams = val
+            Settings.Chams = val
         end,
     }):AddColorPicker("ChamsColor", {
-        Default = Config.ESP.ChamsColor,
+        Default = Settings.ChamsColor,
         Title = "Chams Color",
         Callback = function(val)
-            Config.ESP.ChamsColor = val
+            Settings.ChamsColor = val
         end,
     })
     
     group:AddSlider("ChamsTransparency", {
         Text = "Chams Transparency",
-        Default = Config.ESP.ChamsTransparency,
+        Default = Settings.ChamsTransparency,
         Min = 0,
         Max = 1,
         Rounding = 2,
         Compact = true,
         Callback = function(val)
-            Config.ESP.ChamsTransparency = val
+            Settings.ChamsTransparency = val
         end,
     })
 end
 
 function ESP:StartLoop()
     LoopConnection = Utils.RunService.RenderStepped:Connect(function()
-        if not Config.ESP.Enabled then 
+        if not Settings.Enabled then 
             self:ClearAll()
             return 
         end
@@ -204,7 +218,6 @@ function ESP:UpdatePlayerESP(player)
         return
     end
     
-    -- Get box bounds
     local size, position = self:GetBoxBounds(char)
     if not size then
         self:HideESP(box)
@@ -212,12 +225,11 @@ function ESP:UpdatePlayerESP(player)
     end
     
     -- Update Box
-    if Config.ESP.Box then
-        local color = Config.ESP.BoxColor
+    if Settings.Box then
         box.boxLine.Visible = true
         box.boxLine.Position = position
         box.boxLine.Size = size
-        box.boxLine.Color = color
+        box.boxLine.Color = Settings.BoxColor
         
         box.boxOutline.Visible = true
         box.boxOutline.Position = position - Vector2.new(1, 1)
@@ -228,7 +240,7 @@ function ESP:UpdatePlayerESP(player)
     end
     
     -- Update Health Bar
-    if Config.ESP.HealthBar then
+    if Settings.HealthBar then
         local healthPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
         local hpColor = Color3.fromRGB(255 * (1 - healthPercent), 255 * healthPercent, 0)
         local barHeight = size.Y * healthPercent
@@ -243,17 +255,17 @@ function ESP:UpdatePlayerESP(player)
     end
     
     -- Update Name
-    if Config.ESP.Name then
+    if Settings.Name then
         box.nameLabel.Visible = true
         box.nameLabel.Text = player.Name
-        box.nameLabel.Color = Config.ESP.NameColor
+        box.nameLabel.Color = Settings.NameColor
         box.nameLabel.Position = Vector2.new(position.X + size.X / 2, position.Y - 15)
     else
         box.nameLabel.Visible = false
     end
     
     -- Update Chams
-    if Config.ESP.Chams then
+    if Settings.Chams then
         self:UpdateChams(box, char)
     else
         if box.chams then
@@ -298,10 +310,10 @@ function ESP:UpdateChams(box, char)
     end
     
     box.chams.Enabled = true
-    box.chams.FillColor = Config.ESP.ChamsColor
-    box.chams.FillTransparency = Config.ESP.ChamsTransparency
-    box.chams.OutlineColor = Config.ESP.ChamsColor
-    box.chams.OutlineTransparency = Config.ESP.ChamsTransparency
+    box.chams.FillColor = Settings.ChamsColor
+    box.chams.FillTransparency = Settings.ChamsTransparency
+    box.chams.OutlineColor = Settings.ChamsColor
+    box.chams.OutlineTransparency = Settings.ChamsTransparency
     box.chams.Adornee = char
 end
 
